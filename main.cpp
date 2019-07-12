@@ -2,6 +2,6 @@
 #include "ExternalMerge.h"
 
 int main() {
-    ExternalMerge merge("small.in", "small.out", std::make_unique<MegaByteMemoryUnit>(128));
+    ExternalMerge merge("input", "output", std::make_unique<MegaByteMemoryUnit>(124));
     return 0;
 }
