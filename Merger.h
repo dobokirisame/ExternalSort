@@ -7,16 +7,10 @@
 #include <iostream>
 #include <iterator>
 #include <cstdio>
-#include <vector>
 
 namespace {
 const std::string outputChunkPrefix{"outputChunk"};
 } //namespace
-
-struct MergerHelper {
-    uint32_t value;
-    std::ifstream *sourceFile;
-};
 
 class Merger {
 public:
@@ -74,14 +68,43 @@ private:
         }
         std::ofstream outputFile;
         outputFile.open(outputFileName, std::ios_base::binary);
-        std::merge(std::istreambuf_iterator<char>(firstFile), std::istreambuf_iterator<char>(),
-                   std::istreambuf_iterator<char>(secondFile), std::istreambuf_iterator<char>(),
-                   std::ostreambuf_iterator<char>(outputFile));
-
+        makeRawMerge(&firstFile, &secondFile, &outputFile);
         return true;
+    }
+    void makeRawMerge(std::ifstream *firstFile, std::ifstream *secondFile, std::ofstream *outputFile) const {
+        firstFile->seekg(0, firstFile->beg);
+        secondFile->seekg(0, secondFile->beg);
+        auto filesSize = fileSize(firstFile) + fileSize(secondFile);
+        auto itemsCount = filesSize/sizeof(uint32_t);
+        uint32_t first = 0, second = 0;
+        firstFile->read(reinterpret_cast<char*>(&first), static_cast<std::streamsize>(sizeof(uint32_t)));
+        secondFile->read(reinterpret_cast<char*>(&second), static_cast<std::streamsize>(sizeof(uint32_t)));
+        while(itemsCount > 0) {
+            if(firstFile->eof() ||
+                    first >= second) {
+                writeData(second, outputFile);
+                itemsCount--;
+                secondFile->read(reinterpret_cast<char*>(&second), static_cast<std::streamsize>(sizeof(uint32_t)));
+            } else if(secondFile->eof() ||
+                      first < second) {
+                writeData(first, outputFile);
+                itemsCount--;
+                firstFile->read(reinterpret_cast<char*>(&first), static_cast<std::streamsize>(sizeof(uint32_t)));
+            }
+        }
     }
     void writeData(uint32_t value, std::ofstream *outputFile) const {
         outputFile->write(reinterpret_cast<const char *>(&value), static_cast<std::streamsize>(sizeof (uint32_t)));
+    }
+
+    uint32_t fileSize(std::ifstream *stream) const {
+        if(!stream->is_open()) {
+            return 0;
+        }
+        stream->seekg(0, stream->end);
+        auto fileSize = static_cast<uint32_t>(stream->tellg());
+        stream->seekg(0, stream->beg);
+        return fileSize;
     }
 };
 
