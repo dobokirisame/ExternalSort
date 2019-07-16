@@ -1,7 +1,13 @@
 #include "MemoryUnits.h"
 #include "ExternalMerge.h"
+#include <exception>
+#include <iostream>
 
 int main() {
-    ExternalMerge merge("input", "output", std::make_unique<MegaByteMemoryUnit>(124));
+    try {
+        ExternalMerge merge("input", "output", std::make_unique<MegaByteMemoryUnit>(124));
+    } catch (std::exception &e) {
+        std::cout << e.what() << std::cend;
+    }
     return 0;
 }
