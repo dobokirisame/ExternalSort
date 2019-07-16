@@ -102,7 +102,7 @@ private:
             return 0;
         }
         stream->seekg(0, stream->end);
-        uint64_t fileSize = static_cast<uint32_t>(stream->tellg());
+        uint64_t fileSize = static_cast<uint64_t>(stream->tellg());
         stream->seekg(0, stream->beg);
         return fileSize;
     }
